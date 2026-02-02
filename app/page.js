@@ -316,7 +316,7 @@ export default function Home() {
       >
         <div className="container text-center">
           <p className="text-muted mb-0">
-            © 2024 Tri Âm. Thiết kế cho những tâm hồn cần chia sẻ.
+            © 2026 Tri Âm. Thiết kế cho những tâm hồn cần chia sẻ.
           </p>
         </div>
       </footer>
