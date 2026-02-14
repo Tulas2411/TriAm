@@ -87,11 +87,12 @@ export default function ChatPage() {
     setReplyingTo(null);
   };
 
-  // 3. Xử lý logic Nút Back & Thoát
+  // 3. Xử lý logic Nút Back
   const handleBack = () => {
     if (myRole === "listener") {
       router.push("/dashboard");
     } else {
+      // Nếu user bấm Back cũng hiện confirm xóa cho an toàn
       setShowConfirm(true);
     }
   };
@@ -111,7 +112,6 @@ export default function ChatPage() {
   if (isDeleting) return <TrashAnimation />;
 
   return (
-    // UPDATE: Thay đổi background thành màu tím gradient
     <div
       style={{
         position: "fixed",
@@ -120,14 +120,13 @@ export default function ChatPage() {
         right: 0,
         bottom: 0,
         background:
-          "linear-gradient(180deg, #e8e3f3 0%, #d4c9e8 50%, #c9c3e6 100%)", // Màu tím theo mẫu
+          "linear-gradient(180deg, #e8e3f3 0%, #d4c9e8 50%, #c9c3e6 100%)",
         zIndex: 1000,
         display: "flex",
         flexDirection: "column",
       }}
     >
       <div className="container h-100 py-md-3 py-0 d-flex flex-column flex-grow-1">
-        {/* Card trong suốt để lộ màu nền tím */}
         <div
           className="card border-0 shadow-lg flex-grow-1 overflow-hidden d-flex flex-column"
           style={{
@@ -138,6 +137,7 @@ export default function ChatPage() {
         >
           {/* HEADER */}
           <div className="card-header bg-white bg-opacity-75 border-bottom-0 p-3 d-flex align-items-center flex-shrink-0">
+            {/* Nút Back */}
             <button
               onClick={handleBack}
               className="btn btn-light rounded-circle me-3 text-secondary shadow-sm"
@@ -145,6 +145,8 @@ export default function ChatPage() {
             >
               ←
             </button>
+
+            {/* Title */}
             <div className="flex-grow-1">
               <h5
                 className="m-0 fw-bold"
@@ -153,9 +155,20 @@ export default function ChatPage() {
                 {myRole === "listener" ? "🎧 Phòng Lắng Nghe" : "🌸 Góc Tâm Sự"}
               </h5>
             </div>
+
+            {/* --- NÚT XÓA KÝ ỨC (Chỉ hiện cho User) --- */}
+            {myRole === "user" && (
+              <button
+                className="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold shadow-sm"
+                onClick={() => setShowConfirm(true)}
+              >
+                Xóa ký ức
+              </button>
+            )}
+            {/* ---------------------------------------- */}
           </div>
 
-          {/* BODY CHAT - Trong suốt */}
+          {/* BODY CHAT */}
           <div
             className="card-body overflow-auto d-flex flex-column p-3"
             style={{ flex: 1, scrollBehavior: "smooth" }}
@@ -215,7 +228,7 @@ export default function ChatPage() {
             <p>Bạn muốn rời khỏi cuộc trò chuyện này?</p>
           ) : (
             <>
-              <p>Bạn có chắc muốn thoát?</p>
+              <p>Bạn có chắc muốn kết thúc?</p>
               <div className="alert alert-warning small mb-0">
                 ⚠️ Dữ liệu chat sẽ bị <strong>XÓA VĨNH VIỄN</strong> ngay lập
                 tức.

@@ -36,19 +36,12 @@ export default function Home() {
                 background: "linear-gradient(135deg, #a78bfa, #7c3aed)",
               }}
             >
-              <svg
-                className="text-white"
-                width="20"
-                height="20"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <img
+                src="/logo-triam.png" // Đảm bảo ảnh này nằm trong thư mục public/
+                alt="Tri Âm Logo"
+                className="rounded-circle shadow-sm" // Thêm bo tròn và bóng nhẹ cho đẹp
+                style={{ width: "40px", height: "40px", objectFit: "cover" }}
+              />
             </div>
             <span className="h5 mb-0 fw-bold gradient-text">Tri Âm</span>
           </div>
@@ -229,7 +222,7 @@ export default function Home() {
                   style={{ background: "#f3e8ff" }}
                 >
                   <svg
-                    className="text-primary"
+                    style={{ color: "#9333ea" }}
                     width="32"
                     height="32"
                     fill="currentColor"
@@ -258,7 +251,7 @@ export default function Home() {
                   style={{ background: "#f3e8ff" }}
                 >
                   <svg
-                    className="text-primary"
+                    style={{ color: "#9333ea" }}
                     width="32"
                     height="32"
                     fill="currentColor"
@@ -284,7 +277,7 @@ export default function Home() {
                   style={{ background: "#f3e8ff" }}
                 >
                   <svg
-                    className="text-primary"
+                    style={{ color: "#9333ea" }}
                     width="32"
                     height="32"
                     fill="currentColor"
@@ -329,21 +322,45 @@ export default function Home() {
         contentClassName="border-0 rounded-4 shadow-lg"
       >
         <Modal.Header closeButton className="border-0 pb-0">
-          <Modal.Title className="fw-bold" style={{ color: "#6b5486" }}>
-            🔒 Cam kết bảo mật
+          <Modal.Title
+            className="fw-bold fs-5"
+            style={{ color: "#6b5486", lineHeight: "1.4" }}
+          >
+            Trước khi mình bắt đầu câu chuyện mình nói nhỏ điều này nhé
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="px-4 py-4">
-          <p className="text-muted mb-4">Bạn đang bước vào vùng an toàn.</p>
+        <Modal.Body
+          className="px-4 py-3"
+          style={{ maxHeight: "70vh", overflowY: "auto" }}
+        >
           <div
-            className="alert"
-            style={{ background: "#f3e8ff", color: "#6b5486" }}
+            style={{ color: "#555", fontSize: "0.95rem", lineHeight: "1.6" }}
           >
-            <ul className="mb-0 ps-3">
-              <li>Không cần đăng nhập.</li>
-              <li>Tôn trọng người lắng nghe.</li>
-              <li>Dữ liệu sẽ xóa vĩnh viễn khi kết thúc.</li>
-            </ul>
+            <p className="mb-3">
+              <strong>Tri Âm</strong> là một góc an toàn để bạn chia sẻ ẩn danh
+              và được lắng nghe bởi người có kiến thức về tâm lý. Tụi mình ở đây
+              để đồng hành và giúp bạn nhẹ lòng hơn, nhưng không thay thế cho
+              bác sĩ hay điều trị tâm lý chuyên sâu đâu nha.
+            </p>
+            <p className="mb-3">
+              Nếu bạn đang trải qua khủng hoảng nghiêm trọng hoặc có ý nghĩ làm
+              hại bản thân hay người khác, bạn nên tìm đến cơ sở y tế hoặc
+              chuyên gia gần nhất để được hỗ trợ kịp thời và an toàn hơn.
+            </p>
+            <p className="mb-3">
+              Sau cuộc trò chuyện, mọi quyết định vẫn là ở bạn. Mong bạn cũng
+              giúp giữ không gian này an toàn bằng cách không sử dụng nền tảng
+              cho mục đích gây tổn thương hay vi phạm pháp luật nhé.
+            </p>
+            <p className="mb-3">
+              Cuộc trò chuyện của chúng ta hoàn toàn ẩn danh. Khi bạn chọn kết
+              thúc và đồng ý xóa, nội dung sẽ được xóa khỏi hệ thống và không
+              thể khôi phục lại.
+            </p>
+            <p className="mb-0">
+              Nếu bạn đã sẵn sàng, nhấn <strong>“Đồng ý”</strong> để mình bắt
+              đầu cùng nhau nha.
+            </p>
           </div>
         </Modal.Body>
         <Modal.Footer className="border-0 pt-0 px-4 pb-4">
@@ -355,11 +372,11 @@ export default function Home() {
             Hủy
           </Button>
           <Button
-            className="btn-triam-primary"
+            className="btn-triam-primary rounded-pill px-4"
             onClick={handleStart}
             disabled={loading}
           >
-            {loading ? "Đang tạo phòng..." : "Tôi đồng ý & Bắt đầu"}
+            {loading ? "Đang tạo phòng..." : "Đồng ý"}
           </Button>
         </Modal.Footer>
       </Modal>
