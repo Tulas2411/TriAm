@@ -14,7 +14,7 @@ export const metadata = {
   description:
     "Nơi bạn có thể chia sẻ nỗi lòng một cách an toàn, ẩn danh và mọi ký ức sẽ được xóa bỏ khi kết thúc.",
   icons: {
-    icon: "/favicon.ico", // Bạn có thể thêm icon logo vào thư mục public
+    icon: "/logo.png", // Bạn có thể thêm icon logo vào thư mục public
   },
 };
 
