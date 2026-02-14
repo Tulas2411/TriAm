@@ -93,7 +93,7 @@ export default function Home() {
                 className="text-primary fw-bold"
                 style={{ fontSize: "0.8rem" }}
               >
-                💜 WEB DESIGN TRI ÂM
+                💜 WEB TRI ÂM
               </span>
             </div>
 

@@ -5,7 +5,6 @@ import { createClient } from "@/utils/supabase/client";
 import { Modal, Button } from "react-bootstrap";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Import các component con
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
 import TrashAnimation from "@/components/chat/TrashAnimation";
@@ -13,42 +12,35 @@ import TrashAnimation from "@/components/chat/TrashAnimation";
 export default function ChatPage() {
   const { id } = useParams();
   const router = useRouter();
-  const supabase = createClient(); // Khởi tạo Supabase Client mới
+  const supabase = createClient();
 
   const [messages, setMessages] = useState([]);
-  const [myRole, setMyRole] = useState("user"); // Mặc định là 'user' (người lạ)
+  const [myRole, setMyRole] = useState("user");
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
   const endRef = useRef(null);
 
-  // 1. Kiểm tra danh tính & Lấy tin nhắn
+  // 1. Setup ban đầu
   useEffect(() => {
-    // A. Kiểm tra xem người dùng hiện tại có phải là Listener (đã login) không
     const checkIdentity = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (user) {
-        setMyRole("listener"); // Nếu đã đăng nhập -> Role là Listener
-      } else {
-        setMyRole("user"); // Nếu chưa đăng nhập -> Role là User
-      }
+      setMyRole(user ? "listener" : "user");
     };
     checkIdentity();
 
-    // B. Lấy danh sách tin nhắn cũ
     const fetchMessages = async () => {
       const { data } = await supabase
         .from("messages")
         .select("*")
         .eq("session_id", id)
         .order("created_at", { ascending: true });
-
       if (data) setMessages(data);
     };
     fetchMessages();
 
-    // C. Bắt sự kiện Realtime (Tin nhắn mới đến)
     const channel = supabase
       .channel("chat_room")
       .on(
@@ -59,149 +51,150 @@ export default function ChatPage() {
           table: "messages",
           filter: `session_id=eq.${id}`,
         },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
-        },
+        (payload) => setMessages((prev) => [...prev, payload.new]),
       )
       .subscribe();
 
-    // Cleanup khi thoát trang
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [id, supabase]);
 
-  // 2. Auto Scroll xuống cuối khi có tin mới
+  // Scroll xuống cuối
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 3. Gửi tin nhắn
+  // 2. Xử lý Gửi tin nhắn
   const handleSend = async (text) => {
     if (!text.trim()) return;
 
-    const { error } = await supabase.from("messages").insert([
-      {
-        session_id: id,
-        content: text,
-        role: myRole, // Gửi với role hiện tại (user hoặc listener)
-      },
-    ]);
+    const payload = {
+      session_id: id,
+      content: text,
+      role: myRole,
+      reply_to_id: replyingTo ? replyingTo.id : null,
+    };
 
-    if (error) {
-      console.error("Lỗi gửi tin:", error);
-      alert("Không thể gửi tin nhắn. Vui lòng thử lại.");
+    await supabase.from("messages").insert([payload]);
+    setReplyingTo(null);
+  };
+
+  // 3. Xử lý logic Nút Back & Thoát
+  const handleBack = () => {
+    if (myRole === "listener") {
+      router.push("/dashboard");
+    } else {
+      setShowConfirm(true);
     }
   };
 
-  // 4. Xử lý "Xóa ký ức"
+  // 4. Xóa ký ức
   const executeDelete = async () => {
     setShowConfirm(false);
-    setIsDeleting(true); // Kích hoạt animation màn hình chờ
+    setIsDeleting(true);
 
-    // Đợi 1.5s cho animation chạy rồi mới xóa dữ liệu
     setTimeout(async () => {
-      // Xóa messages trước
       await supabase.from("messages").delete().eq("session_id", id);
-      // Xóa session sau
       await supabase.from("sessions").delete().eq("id", id);
-
-      // Điều hướng sau khi xóa
-      if (myRole === "listener") {
-        router.push("/dashboard"); // Listener về dashboard
-        router.refresh();
-      } else {
-        router.push("/"); // User về trang chủ
-      }
+      router.push("/");
     }, 1500);
   };
 
-  // --- RENDER ---
-
-  // Nếu đang trong trạng thái xóa -> Hiển thị Animation thùng rác
   if (isDeleting) return <TrashAnimation />;
 
   return (
+    // UPDATE: Thay đổi background thành màu tím gradient
     <div
-      className="container py-3 h-100"
-      style={{ height: "100vh", maxHeight: "100vh" }}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background:
+          "linear-gradient(180deg, #e8e3f3 0%, #d4c9e8 50%, #c9c3e6 100%)", // Màu tím theo mẫu
+        zIndex: 1000,
+        display: "flex",
+        flexDirection: "column",
+      }}
     >
-      <div
-        className="card border-0 shadow-lg h-100 overflow-hidden"
-        style={{ borderRadius: "20px" }}
-      >
-        {/* HEADER */}
-        <div className="card-header bg-white border-bottom-0 p-3 d-flex justify-content-between align-items-center">
-          <div>
-            <div className="d-flex align-items-center gap-2">
-              <span style={{ fontSize: "1.5rem" }}>
-                {myRole === "listener" ? "🎧" : "🌸"}
-              </span>
+      <div className="container h-100 py-md-3 py-0 d-flex flex-column flex-grow-1">
+        {/* Card trong suốt để lộ màu nền tím */}
+        <div
+          className="card border-0 shadow-lg flex-grow-1 overflow-hidden d-flex flex-column"
+          style={{
+            borderRadius: "20px",
+            backgroundColor: "rgba(255, 255, 255, 0.4)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          {/* HEADER */}
+          <div className="card-header bg-white bg-opacity-75 border-bottom-0 p-3 d-flex align-items-center flex-shrink-0">
+            <button
+              onClick={handleBack}
+              className="btn btn-light rounded-circle me-3 text-secondary shadow-sm"
+              style={{ width: 40, height: 40 }}
+            >
+              ←
+            </button>
+            <div className="flex-grow-1">
               <h5
                 className="m-0 fw-bold"
                 style={{ color: "var(--triam-text, #4B4289)" }}
               >
-                {myRole === "listener" ? "Phòng Lắng Nghe" : "Góc Tâm Sự"}
+                {myRole === "listener" ? "🎧 Phòng Lắng Nghe" : "🌸 Góc Tâm Sự"}
               </h5>
             </div>
-            <small className="text-muted ms-1">
-              {myRole === "listener"
-                ? "Bạn đang là Người lắng nghe"
-                : "Danh tính của bạn được ẩn"}
-            </small>
           </div>
 
-          <button
-            className="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold"
-            onClick={() => setShowConfirm(true)}
+          {/* BODY CHAT - Trong suốt */}
+          <div
+            className="card-body overflow-auto d-flex flex-column p-3"
+            style={{ flex: 1, scrollBehavior: "smooth" }}
           >
-            Kết thúc
-          </button>
-        </div>
+            <AnimatePresence>
+              {messages.map((msg) => {
+                const isMe = msg.role === myRole;
+                const originalMsg = msg.reply_to_id
+                  ? messages.find((m) => m.id === msg.reply_to_id)
+                  : null;
 
-        {/* BODY CHAT */}
-        <div
-          className="card-body bg-light overflow-auto d-flex flex-column"
-          style={{ flex: 1 }}
-        >
-          {messages.length === 0 && (
-            <div className="text-center mt-5 text-muted">
-              <p className="mb-1" style={{ fontSize: "3rem" }}>
-                🍃
-              </p>
-              <p>Chưa có tin nhắn nào.</p>
-              <p className="small">Hãy bắt đầu câu chuyện...</p>
-            </div>
-          )}
+                return (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-100"
+                  >
+                    <MessageBubble
+                      message={msg}
+                      isMe={isMe}
+                      onReply={(m) => setReplyingTo(m)}
+                      originalMessage={originalMsg}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+            <div ref={endRef} />
+          </div>
 
-          <AnimatePresence>
-            {messages.map((msg) => {
-              // Logic xác định tin nhắn của "Tôi" hay "Người kia"
-              // Nếu msg.role trùng với myRole -> Là của tôi (isMe = true)
-              const isMe = msg.role === myRole;
-
-              return (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="d-flex flex-column"
-                >
-                  <MessageBubble
-                    content={msg.content}
-                    role={msg.role}
-                    isMe={isMe}
-                  />
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-          <div ref={endRef} />
-        </div>
-
-        {/* INPUT */}
-        <div className="bg-white">
-          <ChatInput onSendMessage={handleSend} />
+          {/* INPUT */}
+          <div className="flex-shrink-0 bg-white">
+            <ChatInput
+              onSendMessage={handleSend}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+            />
+          </div>
         </div>
       </div>
 
@@ -214,15 +207,21 @@ export default function ChatPage() {
       >
         <Modal.Header closeButton className="border-0">
           <Modal.Title className="fw-bold text-danger">
-            Xác nhận kết thúc
+            Rời đi & Xóa ký ức?
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Bạn có chắc muốn xóa vĩnh viễn cuộc trò chuyện này?</p>
-          <div className="alert alert-warning small mb-0">
-            ⚠️ Hành động này không thể hoàn tác. Mọi tin nhắn sẽ biến mất mãi
-            mãi.
-          </div>
+          {myRole === "listener" ? (
+            <p>Bạn muốn rời khỏi cuộc trò chuyện này?</p>
+          ) : (
+            <>
+              <p>Bạn có chắc muốn thoát?</p>
+              <div className="alert alert-warning small mb-0">
+                ⚠️ Dữ liệu chat sẽ bị <strong>XÓA VĨNH VIỄN</strong> ngay lập
+                tức.
+              </div>
+            </>
+          )}
         </Modal.Body>
         <Modal.Footer className="border-0">
           <Button
@@ -230,14 +229,18 @@ export default function ChatPage() {
             className="rounded-pill px-4"
             onClick={() => setShowConfirm(false)}
           >
-            Quay lại
+            Ở lại
           </Button>
           <Button
             variant="danger"
             className="rounded-pill px-4"
-            onClick={executeDelete}
+            onClick={
+              myRole === "listener"
+                ? () => router.push("/dashboard")
+                : executeDelete
+            }
           >
-            🗑️ Xóa ký ức
+            {myRole === "listener" ? "Rời phòng" : "Xóa ký ức & Thoát"}
           </Button>
         </Modal.Footer>
       </Modal>
