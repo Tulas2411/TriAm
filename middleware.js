@@ -40,14 +40,24 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL("/cong-bi-mat", request.url));
   }
 
-  // Nếu đã login mà cố vào trang login -> Đá vào dashboard
+  // Nếu đã login mà cố vào trang login quản trị -> Đá vào dashboard
   if (request.nextUrl.pathname.startsWith("/cong-bi-mat") && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+  
+  // BẢO MẬT: Nếu vào /pricing mà chưa có user -> Đá về trang login chung
+  if (request.nextUrl.pathname.startsWith("/pricing") && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Ngăn user đã login vào lại trang đăng ký / đăng nhập
+  if ((request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/register")) && user) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/cong-bi-mat"],
+  matcher: ["/dashboard/:path*", "/cong-bi-mat", "/pricing/:path*", "/login", "/register"],
 };

@@ -1,13 +1,38 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, Button } from "react-bootstrap";
 import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/client";
+import Link from "next/link";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
   const router = useRouter();
+  const supabaseClient = createClient();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      setUser(user);
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabaseClient.auth.signOut();
+    setUser(null);
+  };
+
 
   const handleStart = async () => {
     setLoading(true);
@@ -67,12 +92,36 @@ export default function Home() {
             </a>
           </nav>
 
-          <button
-            className="btn btn-triam-primary"
-            onClick={() => setShowModal(true)}
-          >
-            Bắt đầu
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            {!user ? (
+              <>
+                <Link href="/login" className="btn btn-outline-primary d-none d-md-block rounded-pill fw-medium">
+                  Đăng nhập
+                </Link>
+                <Link href="/register" className="btn btn-triam-primary rounded-pill fw-medium px-4">
+                  Đăng ký
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/pricing" className="btn btn-warning fw-bold text-dark d-none d-md-block rounded-pill shadow-sm">
+                  ⭐ Nâng cấp Premium
+                </Link>
+                <button
+                  className="btn btn-outline-danger rounded-pill fw-medium px-4"
+                  onClick={handleLogout}
+                >
+                  Đăng xuất
+                </button>
+              </>
+            )}
+            <button
+              className="btn btn-triam-primary ms-2 rounded-pill px-4"
+              onClick={() => setShowModal(true)}
+            >
+              Bắt đầu
+            </button>
+          </div>
         </div>
       </header>
 
