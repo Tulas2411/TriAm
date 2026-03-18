@@ -16,7 +16,7 @@ export default function SecretLogin() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -25,8 +25,14 @@ export default function SecretLogin() {
       setError("Sai mật khẩu hoặc email.");
       setLoading(false);
     } else {
-      router.push("/dashboard");
-      router.refresh();
+      if (data?.user?.user_metadata?.role === 'listener') {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        await supabase.auth.signOut();
+        setError("Tài khoản không có quyền truy cập khu vực này.");
+        setLoading(false);
+      }
     }
   };
 

@@ -25,6 +25,7 @@ export default function Register() {
       options: {
         data: {
           username: username,
+          role: 'sharer',
         }
       }
     });
