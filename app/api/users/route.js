@@ -5,8 +5,8 @@ export async function GET() {
   try {
     const supabaseAdmin = createAdminClient();
     
-    // Fetch users (Requires Service Role Key)
-    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    // Fetch users (Requires Service Role Key). Overriding default pagination max limit size.
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
     
     if (error) throw error;
     
