@@ -38,8 +38,10 @@ export default function Dashboard() {
   // Validate Access
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user || user.user_metadata?.role !== 'listener') {
+      if (!user) {
          router.push('/cong-bi-mat');
+      } else if (user.user_metadata?.role !== 'listener') {
+         router.push('/');
       }
     });
   }, []);

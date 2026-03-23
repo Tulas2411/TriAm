@@ -27,7 +27,16 @@ export default function ChatPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      setMyRole(user ? "listener" : "user");
+      
+      if (user) {
+        if (user.user_metadata?.role === 'listener') {
+          setMyRole("listener");
+        } else {
+          setMyRole("user"); // Keep "user" as the internal role name for sharers
+        }
+      } else {
+        setMyRole("user");
+      }
     };
     checkIdentity();
 
@@ -92,8 +101,8 @@ export default function ChatPage() {
     if (myRole === "listener") {
       router.push("/dashboard");
     } else {
-      // Nếu user bấm Back cũng hiện confirm xóa cho an toàn
-      setShowConfirm(true);
+      // Sharer bấm back về homepage không xóa ký ức
+      router.push("/");
     }
   };
 

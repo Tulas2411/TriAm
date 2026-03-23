@@ -36,8 +36,13 @@ export async function middleware(request) {
   } = await supabase.auth.getUser();
 
   // BẢO MẬT: Nếu vào /dashboard mà chưa có user -> Đá về trang login bí mật
-  if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
-    return NextResponse.redirect(new URL("/cong-bi-mat", request.url));
+  // Nếu có user nhưng không phải listener -> Đá về homepage
+  if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/cong-bi-mat", request.url));
+    } else if (user.user_metadata?.role !== 'listener') {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   // Nếu đã login mà cố vào trang login quản trị -> Đá vào dashboard
